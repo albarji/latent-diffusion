@@ -9,32 +9,22 @@ with gr.Blocks() as demo:
             Write a prompt to generate images illustrating that prompt.
             """
         )
-        text_input = gr.Textbox()
+        with gr.Column():
+            text_input = gr.Textbox()
+            steps = gr.Slider(minimum=50, maximum=500, value=250, step=10, label="Number of diffusion model steps")
+            guidance = gr.Slider(minimum=0.0, maximum=15.0, value=5.0, step=1.0, label="Classifier-free guidance strength")
         render_button = gr.Button("Render")
     output_images = []
-    with gr.Row():
-        out1 = gr.Image(shape=[256, 256])
-        out2 = gr.Image(shape=[256, 256])
-        out3 = gr.Image(shape=[256, 256])
-        out4 = gr.Image(shape=[256, 256])
-    with gr.Row():
-        out5 = gr.Image(shape=[256, 256])
-        out6 = gr.Image(shape=[256, 256])
-        out7 = gr.Image(shape=[256, 256])
-        out8 = gr.Image(shape=[256, 256])
+    for _ in range(2):
+        with gr.Row():
+            for _ in range(4):
+                out = gr.Image(shape=[256, 256])
+                output_images.append(out)
 
-    # for _ in range(3):
-    #     with gr.Column():
-    #         for _ in range(3):
-    #             with gr.Row():
-    #                 output_image = gr.Image(shape=[256, 256])
-    #                 output_images.append(output_image)
-
-    # render_button.click(render_image, inputs=text_input, outputs=output_images)
     render_button.click(
         render_image,
-        inputs=text_input,
-        outputs=[out1, out2, out3, out4, out5, out6, out7, out8]
+        inputs=[text_input, steps, guidance],
+        outputs=output_images
     )
 
 demo.launch(enable_queue=True, share=True)

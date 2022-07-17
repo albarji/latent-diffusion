@@ -39,16 +39,12 @@ def load_model(ckpt, verbose=False):
     return LOADED_MODELS[ckpt]
 
 
-def render_image(prompt):
+def render_image(prompt, ddim_steps, scale):
     """Renders an image for the given prompt"""
     outdir = TemporaryDirectory()
-    ddim_steps = 50
-    # ddim_steps = 500
     # ddim_eta = 1.3
     ddim_eta = 0.0  # NOTE: using eta 1.3 produces divergence for small ddim_steps. Why?
     n_samples = 8
-    # scale = 12.0
-    scale = 5.0
     H = W = 256
 
     model = load_model("models/ldm/text2img-large/model.ckpt")
