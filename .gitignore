@@ -1,0 +1,6 @@
+**/__pycache__/
+gradio_queue.db
+latent_diffusion.egg-info
+models/**
+outputs/**
+src/**
