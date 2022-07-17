@@ -46,7 +46,7 @@ def render_image(prompt):
     # ddim_steps = 500
     # ddim_eta = 1.3
     ddim_eta = 0.0  # NOTE: using eta 1.3 produces divergence for small ddim_steps. Why?
-    n_samples = 9
+    n_samples = 8
     # scale = 12.0
     scale = 5.0
     H = W = 256
