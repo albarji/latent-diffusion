@@ -27,4 +27,4 @@ with gr.Blocks() as demo:
         outputs=output_images
     )
 
-demo.launch(enable_queue=True, share=True)
+demo.launch(enable_queue=True, server_name="0.0.0.0")
