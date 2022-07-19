@@ -1,16 +1,13 @@
-from builtins import breakpoint
 from functools import partial
 import os
 import torch
 import numpy as np
 from omegaconf import OmegaConf
 from PIL import Image
-from tqdm import trange
 from einops import rearrange
 from tempfile import TemporaryDirectory
-from torchvision.utils import make_grid
 
-from ldm.conditioners.dummy import blank_conditioner
+from ldm.conditioners.reference_image import reference_conditioner, encode_reference_image
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 
@@ -41,7 +38,7 @@ def load_model(ckpt, verbose=False):
     return LOADED_MODELS[ckpt]
 
 
-def render_image(prompt, ddim_steps, scale, blank_strength=0.0):
+def render_image(prompt, ddim_steps, scale, ref_image=None, ref_strength=0.0):
     """Renders an image for the given prompt"""
     outdir = TemporaryDirectory()
     # ddim_eta = 1.3
@@ -58,8 +55,9 @@ def render_image(prompt, ddim_steps, scale, blank_strength=0.0):
 
     # Prepare conditioners
     conditioner = None
-    if blank_strength:
-        conditioner = partial(blank_conditioner, strength=blank_strength)
+    if ref_strength:
+        latent_ref = encode_reference_image(model, ref_image)
+        conditioner = partial(reference_conditioner, latent_ref=latent_ref, strength=ref_strength)
 
     outpath = outdir.name
 
@@ -91,19 +89,6 @@ def render_image(prompt, ddim_steps, scale, blank_strength=0.0):
             for x_sample in x_samples_ddim:
                 x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
                 all_samples.append(Image.fromarray(x_sample.astype(np.uint8)))
-                # Image.fromarray(x_sample.astype(np.uint8)).save(os.path.join(sample_path, f"{base_count:04}.png"))
-                # base_count += 1
-            # all_samples.append(x_samples_ddim)
-
-    # # additionally, save as grid
-    # grid = torch.stack(all_samples, 0)
-    # grid = rearrange(grid, 'n b c h w -> (n b) c h w')
-    # grid = make_grid(grid, nrow=n_samples)
-
-    # # to image
-    # grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-    # # Image.fromarray(grid.astype(np.uint8)).save(os.path.join(outpath, f'{prompt.replace(" ", "-")}.png'))
-    # return Image.fromarray(grid.astype(np.uint8))
 
     return tuple(all_samples)
     
