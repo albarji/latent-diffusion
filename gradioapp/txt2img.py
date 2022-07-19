@@ -1,4 +1,5 @@
 from builtins import breakpoint
+from functools import partial
 import os
 import torch
 import numpy as np
@@ -9,6 +10,7 @@ from einops import rearrange
 from tempfile import TemporaryDirectory
 from torchvision.utils import make_grid
 
+from ldm.conditioners.dummy import blank_conditioner
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 
@@ -39,7 +41,7 @@ def load_model(ckpt, verbose=False):
     return LOADED_MODELS[ckpt]
 
 
-def render_image(prompt, ddim_steps, scale):
+def render_image(prompt, ddim_steps, scale, blank_strength=0.0):
     """Renders an image for the given prompt"""
     outdir = TemporaryDirectory()
     # ddim_eta = 1.3
@@ -53,6 +55,11 @@ def render_image(prompt, ddim_steps, scale):
     model = model.to(device)
 
     sampler = DDIMSampler(model)
+
+    # Prepare conditioners
+    conditioner = None
+    if blank_strength:
+        conditioner = partial(blank_conditioner, strength=blank_strength)
 
     outpath = outdir.name
 
@@ -75,7 +82,8 @@ def render_image(prompt, ddim_steps, scale):
                                                 verbose=False,
                                                 unconditional_guidance_scale=scale,
                                                 unconditional_conditioning=uc,
-                                                eta=ddim_eta)
+                                                eta=ddim_eta,
+                                                cond_fn=conditioner)
 
             x_samples_ddim = model.decode_first_stage(samples_ddim)
             x_samples_ddim = torch.clamp((x_samples_ddim+1.0)/2.0, min=0.0, max=1.0)
